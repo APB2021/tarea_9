@@ -1,0 +1,21 @@
+1
+00:00:01,090 --> 00:00:04,160
+Bienvenidos a este vídeo de ejemplo,
+para ver como funcionan los subtítulos.
+
+2
+00:00:15,660 --> 00:00:20,667
+Aquí tenemos nuestro segundo subtítulo. 
+
+3
+00:00:20,667 --> 00:00:25,451
+Y este es el 3º, que ocupa
+2 líneas,
+
+4
+00:00:25,451 --> 00:00:29,340
+Y enlaza con el siguiente,
+que ocupa 3 líneas,
+porque es muy largo. 
+
+

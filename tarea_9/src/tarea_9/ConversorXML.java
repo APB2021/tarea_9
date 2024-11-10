@@ -1,10 +1,11 @@
 package tarea_9;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Scanner;
@@ -20,10 +21,8 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
 
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
@@ -237,4 +236,201 @@ public class ConversorXML {
 			System.out.println("No se encontraron archivos .srt en el directorio especificado.");
 		}
 	}
+
+	/**
+	 * @author Alberto Polo
+	 * @param directorio recibe un directorio o carpeta, filtra los archivos con
+	 *                   extensión .srt que contiene y transforma cada uno de ellos
+	 *                   en .TXT recurriendo al método transformaSRTaTXT(File
+	 *                   ficheroSRT, int caracteresMinimos).
+	 */
+	public void transformaSRTenCarpetaaTXT(File directorio) {
+
+		// Utilizamos listFiles con FilenameFilter para filtrar solo los archivos .srt
+		File[] archivosSRT = directorio.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String nombre) {
+				// Devuelve true solo si el archivo tiene extensión .srt
+				return nombre.toLowerCase().endsWith(".srt");
+			}
+		});
+
+		// Verifica si se han encontrado archivos .srt y los trata:
+		if (archivosSRT != null && archivosSRT.length > 0) {
+
+			// Solicitamos al usuario los caracteres mínimos que ha de tener la línea a
+			// incluir:
+			System.out.print("Introduce el número mínimo de caracteres que debe tener una línea para ser incluida: ");
+			int caracteresMinimos = sc.nextInt();
+
+			// Mostramos un listado con los archivos con extensión ".srt" encontrados en la
+			// carpeta elegida:
+			System.out.println("Archivos .srt encontrados:");
+
+			for (File archivo : archivosSRT) {
+				// Mostramos el nombre del archivo con extensión .srt
+				System.out.println(archivo.getName());
+				// Lo tratamos con el método creado para convertir .srt en .txt:
+				new ConversorXML().transformaSRTaTXT(archivo, caracteresMinimos);
+			}
+		} else {
+			System.out.println("No se encontraron archivos .srt en el directorio especificado.");
+		}
+	}
+
+	private void transformaSRTaTXT(File ficheroSRT, int caracteresMinimos) {
+
+		System.out.println("ARCHIVO: " + ficheroSRT);
+		System.out.println("CARACTERES: " + caracteresMinimos);
+
+		// Necesitaremos un BufferedReader para leer el documento y un BufferedWriter
+		// para escribir:
+		BufferedReader lector = null;
+		BufferedWriter escritor = null;
+
+		try {
+			lector = new BufferedReader(new FileReader(ficheroSRT));
+			// Tomo como referencia la ruta absoluta y le añado la extensión ".txt":
+			escritor = new BufferedWriter(new FileWriter(ficheroSRT.getAbsolutePath() + ".txt"));
+
+			String linea;
+			// Variable temporal para almacenar el texto del subtítulo
+			StringBuilder subtitulo = new StringBuilder();
+			// Patrón para detectar las líneas de tiempo:
+			Pattern patronTiempo = Pattern.compile("(\\d{2}:\\d{2}:\\d{2},\\d{3}) --> (\\d{2}:\\d{2}:\\d{2},\\d{3})");
+			// boolean para definir si hemos de agregar o no el subtitulo:
+			boolean agregarSubtitulo = false;
+
+			// Leemos el fichero línea a línea
+			while ((linea = lector.readLine()) != null) {
+				linea = linea.trim();
+
+				// Si encontramos una línea vacía, esta marca el fin de un bloque de subtítulos
+				if (linea.isEmpty()) {
+					// Si alguna línea del subtítulo es demasiado larga, la guardamos
+					if (agregarSubtitulo) {
+						escritor.write(subtitulo.toString() + "\n\n");
+					}
+					// Reiniciamos el StringBuilder para el siguiente subtítulo
+					subtitulo.setLength(0);
+					agregarSubtitulo = false;
+					continue;
+				}
+
+				// Si es una línea de tiempo, la omitimos:
+				Matcher matcher = patronTiempo.matcher(linea);
+				if (matcher.matches()) {
+					continue; // Omitimos la línea de tiempo.
+				}
+
+				// Si no es la primera línea del subtítulo (que es el número), agregamos el
+				// texto:
+				if (subtitulo.length() > 0) {
+					subtitulo.append(linea).append("\n");
+				}
+
+				// Si alguna línea supera el mínimo de caracteres, cambiamos "agregarSubtitulo"
+				// a true
+				if (linea.length() > caracteresMinimos) {
+					agregarSubtitulo = true;
+				}
+			}
+
+			// Procesar el último subtítulo, si es necesario
+
+			if (agregarSubtitulo) {
+				escritor.write(subtitulo.toString() + "\n\n");
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			// Cerramos el BufferedReader y el BufferedWriter:
+			try {
+				if (lector != null)
+					lector.close();
+				if (escritor != null)
+					escritor.close();
+			} catch (IOException e) {
+
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public void subtituloLineaMasLarga(File ficheroSRT) {
+	    BufferedReader lector = null;
+	    String linea;
+	    StringBuilder subtitulo = new StringBuilder();
+	    int maxLongitud = 0;
+	    String subtituloMasLargo = "";
+	    String lineaMasLarga = "";
+
+	    // Patrón para detectar las líneas de tiempo
+	    Pattern patronTiempo = Pattern.compile("(\\d{2}:\\d{2}:\\d{2},\\d{3}) --> (\\d{2}:\\d{2}:\\d{2},\\d{3})");
+
+	    try {
+	        lector = new BufferedReader(new FileReader(ficheroSRT));
+
+	        while ((linea = lector.readLine()) != null) {
+	            linea = linea.trim();
+
+	            // Si encontramos una línea vacía, esta marca el fin de un bloque de subtítulos
+	            if (linea.isEmpty()) {
+	                // Verificamos si el subtítulo actual tiene la línea más larga
+	                if (subtitulo.length() > 0 && lineaMasLarga.length() > maxLongitud) {
+	                    maxLongitud = lineaMasLarga.length();
+	                    subtituloMasLargo = subtitulo.toString();
+	                }
+	                // Reiniciamos el StringBuilder para el siguiente subtítulo
+	                subtitulo.setLength(0);
+	                lineaMasLarga = ""; // Reiniciamos la línea más larga
+	                continue;
+	            }
+
+	            // Si es una línea de tiempo, la omitimos
+	            Matcher matcher = patronTiempo.matcher(linea);
+	            if (matcher.matches()) {
+	                continue;
+	            }
+
+	            // Agregamos la línea al subtítulo
+	            subtitulo.append(linea).append("\n");
+
+	            // Si la línea actual es más larga que la anterior, la actualizamos
+	            if (linea.length() > maxLongitud) {
+	                maxLongitud = linea.length();
+	                lineaMasLarga = linea; // Guardamos la línea más larga
+	            }
+	        }
+
+	        // Procesamos el último subtítulo si es necesario
+	        if (subtitulo.length() > 0 && lineaMasLarga.length() > maxLongitud) {
+	            maxLongitud = lineaMasLarga.length();
+	            subtituloMasLargo = subtitulo.toString();
+	        }
+
+	        // Mostrar el subtítulo con la línea más larga y la longitud de la línea más larga
+	        if (!subtituloMasLargo.isEmpty()) {
+	            System.out.println("Subtítulo con la línea más larga:");
+	            System.out.println(subtituloMasLargo);
+	            System.out.println("Longitud de la línea más larga: " + maxLongitud);
+	        } else {
+	            System.out.println("No se encontraron subtítulos válidos.");
+	        }
+
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    } finally {
+	        try {
+	            if (lector != null) lector.close();
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+	    }
+	}
+
+
 }

@@ -14,5 +14,7 @@ public class LineasLargas {
 		 * 
 		 * La clase que contiene el main se llamará “LineasLargas”.
 		 */
+
+		new ConversorXML().transformaSRTenCarpetaaTXT(new ConversorXML().solicitarDirectorio());
 	}
 }
