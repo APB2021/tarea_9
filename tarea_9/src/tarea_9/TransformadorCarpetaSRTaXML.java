@@ -14,5 +14,7 @@ public class TransformadorCarpetaSRTaXML {
 		 * 
 		 * La clase que contiene el main se llamará “TransformadorCarpetaSRTaXML”.
 		 */
+
+		new ConversorXML().transformaSRTenCarpetaaXML(new ConversorXML().solicitarDirectorio());
 	}
 }

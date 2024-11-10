@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -32,6 +33,10 @@ public class ConversorXML {
 
 	public static Scanner sc = new Scanner(System.in);
 
+	/**
+	 * @author Alberto Polo
+	 * @return Devuelve la ruta completa de un fichero de subtítulos
+	 */
 	public File solicitarRutaCompleta() {
 
 		File fichero = null;
@@ -64,6 +69,11 @@ public class ConversorXML {
 		return fichero;
 	}
 
+	/**
+	 * @author Alberto Polo
+	 * @param ficheroSRT recibe un fichero de subtítulos con extensión .srt y lo
+	 *                   transforma en .XML
+	 */
 	public void transformaSRTaXML(File ficheroSRT) {
 
 		// Necesitaremos un BufferedReader para leer el documento:
@@ -160,39 +170,71 @@ public class ConversorXML {
 		}
 	}
 
-	public void generaHTML() {
+	/**
+	 * @author Alberto Polo
+	 * @return Devuelve un directorio o carpeta del sistema solicitado al usuario.
+	 */
+	public File solicitarDirectorio() {
 
-		String ficheroEstilosXSL = "Alumnos2.xsl";
-		String ficheroAlumnosXML = "Alumnos.xml";
-		File ficheroHTML = new File("TablaHTML.html");
+		File directorio = null;
 
-		FileOutputStream fos = null;
+		while (directorio == null || !directorio.exists() || !directorio.canRead() || !directorio.isDirectory()) {
 
-		try {
-			fos = new FileOutputStream(ficheroHTML);
+			System.out.println("=============================================================================");
+			System.out.println(" Por favor, introduzca la ruta completa de su carpeta de subtítulos: ");
+			System.out.println(" (EJEMPLO: C:\\Users\\beton\\git\\tarea_9\\tarea_9\\src\\tarea_9\\ejercicio_2");
+			System.out.println("=============================================================================");
 
-			Source estilos = new StreamSource(ficheroEstilosXSL);
-			Source datos = new StreamSource(ficheroAlumnosXML);
+			String rutaCarpeta = sc.nextLine();
 
-			Result result = new StreamResult(fos);
+			directorio = new File(rutaCarpeta);
 
-			Transformer transformer = TransformerFactory.newInstance().newTransformer(estilos);
-			transformer.transform(datos, result);
+			if (!directorio.exists() || !directorio.canRead() || !directorio.isDirectory()) {
 
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (TransformerConfigurationException e) {
-			e.printStackTrace();
-		} catch (TransformerFactoryConfigurationError e) {
-			e.printStackTrace();
-		} catch (TransformerException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				fos.close();
-			} catch (IOException e) {
-				e.printStackTrace();
+				System.out.println("=======================================================");
+				System.out.println(" La carpeta que ha elegido no existe o no es accesible.");
+				System.out.println("=======================================================");
+
+			} else {
+
+				System.out.println("=====================================================================");
+				System.out.println(" Ha elegido la carpeta: " + directorio.getAbsolutePath());
+				System.out.println("=====================================================================");
 			}
+		}
+
+		return directorio;
+	}
+
+	/**
+	 * @author Alberto Polo
+	 * @param directorio recibe un directorio o carpeta, filtra los archivos con
+	 *                   extensión .srt que contiene y transforma cada uno de ellos
+	 *                   en .XML recurriendo al método transformaSRTaXML(File
+	 *                   ficheroSRT).
+	 */
+	public void transformaSRTenCarpetaaXML(File directorio) {
+
+		// Utilizamos listFiles con FilenameFilter para filtrar solo los archivos .srt
+		File[] archivosSRT = directorio.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String nombre) {
+				// Devuelve true solo si el archivo tiene extensión .srt
+				return nombre.toLowerCase().endsWith(".srt");
+			}
+		});
+
+		// Verifica si se han encontrado archivos .srt y los imprime
+		if (archivosSRT != null && archivosSRT.length > 0) {
+			System.out.println("Archivos .srt encontrados:");
+			for (File archivo : archivosSRT) {
+				// Mostramos el nombre del archivo con extensión .srt
+				System.out.println(archivo.getName());
+				// Lo tratamos con el método creado para el ejercicio 1:
+				new ConversorXML().transformaSRTaXML(archivo);
+			}
+		} else {
+			System.out.println("No se encontraron archivos .srt en el directorio especificado.");
 		}
 	}
 }
